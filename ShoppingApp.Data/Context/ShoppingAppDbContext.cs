@@ -28,18 +28,35 @@ namespace ShoppingApp.Data.Context
                 .HasIndex(u => u.Email)
                 .IsUnique();
 
+            modelBuilder.Entity<User>()
+                .Property(u => u.FirstName)
+                .HasMaxLength(50)
+                .IsRequired();
+
+            modelBuilder.Entity<User>()
+                .Property(u => u.LastName)
+                .HasMaxLength(50)
+                .IsRequired();
+
+            modelBuilder.Entity<User>()
+                .Property(u => u.Email)
+                .HasMaxLength(100)
+                .IsRequired();
+
             modelBuilder.Entity<OrderProduct>()
                 .HasKey(op => new { op.OrderId, op.ProductId });
 
             modelBuilder.Entity<OrderProduct>()
                 .HasOne(op => op.Order)
                 .WithMany(o => o.OrderProducts)
-                .HasForeignKey(op => op.OrderId);
+                .HasForeignKey(op => op.OrderId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<OrderProduct>()
                 .HasOne(op => op.Product)
                 .WithMany(p => p.OrderProducts)
-                .HasForeignKey(op => op.ProductId);
+                .HasForeignKey(op => op.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Product>()
                 .Property(p => p.Price)
