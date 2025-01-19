@@ -3,12 +3,12 @@ using ShoppingApp.Business.Interfaces;
 using ShoppingApp.Data.Entities;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using ShoppingApp.Business.Dtos;
 
 namespace ShoppingApp.WebApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -18,23 +18,23 @@ namespace ShoppingApp.WebApi.Controllers
             _userService = userService;
         }
 
-
         [HttpGet("admin")]
         [Authorize(Roles = "Admin")]
         public IActionResult GetAdminData()
         {
-            return Ok(new { message = "This is an Admin data." });
+            return Ok(new { message = "This is Admin data." });
         }
+
         [HttpPost]
-        [AllowAnonymous] 
-        public async Task<IActionResult> CreateUser([FromBody] User user, [FromQuery] string password)
+        [AllowAnonymous]
+        public async Task<IActionResult> CreateUser([FromBody] User user)
         {
-            if (user == null || string.IsNullOrEmpty(password))
+            if (user == null || string.IsNullOrEmpty(user.Password))
             {
-                return BadRequest("Kullanıcı bilgileri ve şifre gereklidir.");
+                return BadRequest(new { Message = "User details and password are required." });
             }
 
-            var createdUser = await _userService.CreateUserAsync(user, password);
+            var createdUser = await _userService.CreateUserAsync(user, user.Password);
             return CreatedAtAction(nameof(GetUserById), new { id = createdUser.Id }, createdUser);
         }
 
@@ -44,7 +44,7 @@ namespace ShoppingApp.WebApi.Controllers
             var user = await _userService.GetUserByIdAsync(id);
             if (user == null)
             {
-                return NotFound("Kullanıcı bulunamadı.");
+                return NotFound(new { Message = "User not found." });
             }
 
             return Ok(user);
@@ -55,21 +55,21 @@ namespace ShoppingApp.WebApi.Controllers
         {
             if (user == null || user.Id != id)
             {
-                return BadRequest("Geçersiz kullanıcı bilgileri.");
+                return BadRequest(new { Message = "Invalid user data." });
             }
 
             try
             {
                 await _userService.UpdateUserAsync(user, id, newPassword);
-                return NoContent(); 
+                return NoContent();
             }
             catch (UnauthorizedAccessException)
             {
-                return Unauthorized("Kendi bilgilerinizi yalnızca güncelleyebilirsiniz.");
+                return Unauthorized(new { Message = "You can only update your own data." });
             }
             catch (KeyNotFoundException)
             {
-                return NotFound("Kullanıcı bulunamadı.");
+                return NotFound(new { Message = "User not found." });
             }
         }
 
@@ -83,21 +83,8 @@ namespace ShoppingApp.WebApi.Controllers
             }
             catch (KeyNotFoundException)
             {
-                return NotFound("Kullanıcı bulunamadı.");
+                return NotFound(new { Message = "User not found." });
             }
-        }
-
-        [HttpPost("authenticate")]
-        [AllowAnonymous] 
-        public async Task<IActionResult> Authenticate([FromQuery] string email, [FromQuery] string password)
-        {
-            var user = await _userService.AuthenticateAsync(email, password);
-            if (user == null)
-            {
-                return Unauthorized("Geçersiz e-posta veya şifre.");
-            }
-
-            return Ok(user);
         }
     }
 }

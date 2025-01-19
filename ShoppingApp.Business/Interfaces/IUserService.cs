@@ -12,6 +12,6 @@ namespace ShoppingApp.Business.Interfaces
         Task UpdateUserAsync(User user, int currentUserId, string newPassword = null);
         Task DeleteUserAsync(int id);
         Task<User> AuthenticateAsync(string email, string password);
-        ServiceMessage<UserInfoDto> LoginUser(LoginUserDto user);
+        Task<ServiceMessage<UserInfoDto>> LoginUserAsync(LoginUserDto user);
     }
 }

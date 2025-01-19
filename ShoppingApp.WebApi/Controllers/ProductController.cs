@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ShoppingApp.Business.Interfaces;
-using ShoppingApp.WebApi.Models;
 
 namespace ShoppingApp.WebApi.Controllers
 {

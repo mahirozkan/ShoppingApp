@@ -7,7 +7,7 @@ using Microsoft.Extensions.Configuration;
 using System.IdentityModel.Tokens.Jwt;
 using ShoppingApp.WebApi.Jwt;
 using ShoppingApp.Business.Dtos;
-using Microsoft.AspNetCore.Identity.Data;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ShoppingApp.WebApi.Controllers
 {
@@ -43,14 +43,14 @@ namespace ShoppingApp.WebApi.Controllers
         }
 
         [HttpPost("login")]
-        public IActionResult Login(LoginRequest request)
+        public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var result = _userService.LoginUser(new LoginUserDto { Email = request.Email, Password = request.Password });
+            var result = await _userService.LoginUserAsync(new LoginUserDto { Email = request.Email, Password = request.Password });
 
             if (!result.IsSucceed)
             {
@@ -71,15 +71,14 @@ namespace ShoppingApp.WebApi.Controllers
                 SecretKey = configuration["Jwt:SecretKey"]!,
                 Issuer = configuration["Jwt:Issuer"]!,
                 Audience = configuration["Jwt:Audience"]!,
-                ExpiryInMinutes = int.Parse(configuration["Jwt:ExpireMinutes"]!)
+                ExpiryInMinutes = int.Parse(configuration["Jwt:ExpiryInMinutes"]!)
             });
 
             return Ok(new
             {
-                Message = "An error occurred while registering the user.",
+                Message = "Login successful",
                 Token = token
             });
         }
     }
 }
-

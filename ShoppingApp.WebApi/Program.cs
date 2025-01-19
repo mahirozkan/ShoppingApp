@@ -60,6 +60,7 @@ builder.Services.AddDbContext<ShoppingAppDbContext>(options => options.UseSqlSer
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
+builder.Services.AddScoped<IProductService, ProductService>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
