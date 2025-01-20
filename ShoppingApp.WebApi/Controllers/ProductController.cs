@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using ShoppingApp.Business.Dtos;
 using ShoppingApp.Business.Interfaces;
 
 namespace ShoppingApp.WebApi.Controllers
@@ -40,7 +41,7 @@ namespace ShoppingApp.WebApi.Controllers
 
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> CreateProduct([FromBody] ProductCreateModel model)
+        public async Task<IActionResult> CreateProduct([FromBody] ProductCreateModelDto model)
         {
             if (!ModelState.IsValid)
             {
@@ -53,7 +54,7 @@ namespace ShoppingApp.WebApi.Controllers
 
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> UpdateProduct(int id, [FromBody] ProductUpdateModel model)
+        public async Task<IActionResult> UpdateProduct(int id, [FromBody] ProductUpdateModelDto model)
         {
             if (id != model.Id)
             {

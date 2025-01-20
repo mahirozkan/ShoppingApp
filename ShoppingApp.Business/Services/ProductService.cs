@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using ShoppingApp.Business.Dtos;
 using ShoppingApp.Business.Interfaces;
 using ShoppingApp.Data.Context;
 using ShoppingApp.Data.Entities;
@@ -24,7 +25,7 @@ namespace ShoppingApp.Business.Services
             return await _context.Products.FirstOrDefaultAsync(p => p.Id == id);
         }
 
-        public async Task<Product> CreateProductAsync(ProductCreateModel model)
+        public async Task<Product> CreateProductAsync(ProductCreateModelDto model)
         {
             var product = new Product
             {
@@ -39,7 +40,7 @@ namespace ShoppingApp.Business.Services
             return product;
         }
 
-        public async Task UpdateProductAsync(int id, ProductUpdateModel model)
+        public async Task UpdateProductAsync(int id, ProductUpdateModelDto model)
         {
             var product = await _context.Products.FindAsync(id);
             if (product != null)

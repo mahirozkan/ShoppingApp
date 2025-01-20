@@ -1,4 +1,5 @@
-﻿using ShoppingApp.Data.Entities;
+﻿using ShoppingApp.Business.Dtos;
+using ShoppingApp.Data.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,8 +12,8 @@ namespace ShoppingApp.Business.Interfaces
     {
         Task<List<Product>> GetAllProductsAsync();
         Task<Product> GetProductByIdAsync(int id);
-        Task<Product> CreateProductAsync(ProductCreateModel model);
-        Task UpdateProductAsync(int id, ProductUpdateModel model);
+        Task<Product> CreateProductAsync(ProductCreateModelDto model);
+        Task UpdateProductAsync(int id, ProductUpdateModelDto model);
         Task DeleteProductAsync(int id);
     }
 }

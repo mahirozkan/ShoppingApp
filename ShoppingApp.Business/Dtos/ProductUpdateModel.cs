@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace ShoppingApp.Business.Interfaces
+namespace ShoppingApp.Business.Dtos
 {
-    public class ProductUpdateModel
+    public class ProductUpdateModelDto
     {
         [Required]
         public int Id { get; set; }

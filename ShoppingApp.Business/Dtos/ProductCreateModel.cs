@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace ShoppingApp.Business.Interfaces
+namespace ShoppingApp.Business.Dtos
 {
-    public class ProductCreateModel
+    public class ProductCreateModelDto
     {
         [Required]
         [StringLength(100)]
