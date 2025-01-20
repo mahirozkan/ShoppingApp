@@ -22,7 +22,7 @@ namespace ShoppingApp.WebApi.Controllers
             var products = await _productService.GetAllProductsAsync();
             if (products == null || products.Count == 0)
             {
-                return NotFound("No products found.");
+                return NotFound("Ürün bulunamadı.");
             }
             return Ok(products);
         }
@@ -33,12 +33,13 @@ namespace ShoppingApp.WebApi.Controllers
             var product = await _productService.GetProductByIdAsync(id);
             if (product == null)
             {
-                return NotFound($"Product with ID {id} not found.");
+                return NotFound($"Id'si {id} olan ürün bulunamadı.");
             }
             return Ok(product);
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateProduct([FromBody] ProductCreateModel model)
         {
             if (!ModelState.IsValid)
@@ -51,17 +52,18 @@ namespace ShoppingApp.WebApi.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateProduct(int id, [FromBody] ProductUpdateModel model)
         {
             if (id != model.Id)
             {
-                return BadRequest("Product ID mismatch.");
+                return BadRequest("Ürün Id'si uyuşmuyor.");
             }
 
             var existingProduct = await _productService.GetProductByIdAsync(id);
             if (existingProduct == null)
             {
-                return NotFound($"Product with ID {id} not found.");
+                return NotFound($"Id'si {id} olan ürün bulunamadı.");
             }
 
             await _productService.UpdateProductAsync(id, model);
@@ -69,12 +71,13 @@ namespace ShoppingApp.WebApi.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteProduct(int id)
         {
             var product = await _productService.GetProductByIdAsync(id);
             if (product == null)
             {
-                return NotFound($"Product with ID {id} not found.");
+                return NotFound($"Id'si {id} olan ürün bulunamadı.");
             }
 
             await _productService.DeleteProductAsync(id);

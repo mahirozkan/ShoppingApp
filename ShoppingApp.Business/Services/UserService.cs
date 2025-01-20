@@ -39,7 +39,7 @@ namespace ShoppingApp.Business.Services
         {
             if (user.Id != currentUserId)
             {
-                throw new UnauthorizedAccessException("You can only update your own account.");
+                throw new UnauthorizedAccessException("Sadece kendi hesabınızı güncelleyebilirsiniz.");
             }
 
             if (!string.IsNullOrEmpty(newPassword))
@@ -56,7 +56,7 @@ namespace ShoppingApp.Business.Services
             var user = await _context.Users.FindAsync(id);
             if (user == null)
             {
-                throw new KeyNotFoundException("User not found.");
+                throw new KeyNotFoundException("Kullanıcı bulunamadı.");
             }
 
             _context.Users.Remove(user);

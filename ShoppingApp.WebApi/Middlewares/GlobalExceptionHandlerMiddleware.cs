@@ -23,7 +23,7 @@ public class GlobalExceptionHandlerMiddleware
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Something went wrong: {ex}");
+            _logger.LogError($"Bir şeyler yanlış gitti: {ex}");
             await HandleExceptionAsync(httpContext, ex);
         }
     }
@@ -33,10 +33,11 @@ public class GlobalExceptionHandlerMiddleware
         context.Response.ContentType = "application/json";
         context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
 
-        return context.Response.WriteAsync(new
+        var errorInfo = new
         {
             message = "Internal Server Error",
             detail = exception.Message
-        }.ToString());
+        };
+        return context.Response.WriteAsync(errorInfo.ToString());
     }
 }

@@ -8,6 +8,7 @@ using System.IdentityModel.Tokens.Jwt;
 using ShoppingApp.WebApi.Jwt;
 using ShoppingApp.Business.Dtos;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ShoppingApp.WebApi.Controllers
 {
@@ -27,18 +28,18 @@ namespace ShoppingApp.WebApi.Controllers
         {
             if (user == null || string.IsNullOrEmpty(user.Password))
             {
-                return BadRequest("Password is required");
+                return BadRequest("Şifre gereklidir.");
             }
 
             try
             {
                 var createdUser = await _userService.CreateUserAsync(user, user.Password);
 
-                return Ok(new { Message = "Registration successful", User = createdUser });
+                return Ok(new { Message = "Kayıt başarılı.", User = createdUser });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { Message = "An error occurred while registering the user.", Details = ex.Message });
+                return StatusCode(500, new { Message = "Kayıt esnasında bir hata oluştu.", Details = ex.Message });
             }
         }
 
@@ -76,7 +77,7 @@ namespace ShoppingApp.WebApi.Controllers
 
             return Ok(new
             {
-                Message = "Login successful",
+                Message = "Giriş başarılı.",
                 Token = token
             });
         }

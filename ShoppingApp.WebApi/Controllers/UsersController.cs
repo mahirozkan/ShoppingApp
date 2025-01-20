@@ -22,7 +22,7 @@ namespace ShoppingApp.WebApi.Controllers
         [Authorize(Roles = "Admin")]
         public IActionResult GetAdminData()
         {
-            return Ok(new { message = "This is Admin data." });
+            return Ok(new { message = "Kullanıcı Admin yetkisine sahip." });
         }
 
         [HttpPost]
@@ -31,20 +31,21 @@ namespace ShoppingApp.WebApi.Controllers
         {
             if (user == null || string.IsNullOrEmpty(user.Password))
             {
-                return BadRequest(new { Message = "User details and password are required." });
+                return BadRequest(new { Message = "Kullanıcı detayları gereklidir." });
             }
 
             var createdUser = await _userService.CreateUserAsync(user, user.Password);
             return CreatedAtAction(nameof(GetUserById), new { id = createdUser.Id }, createdUser);
         }
 
+        [Authorize]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetUserById(int id)
         {
             var user = await _userService.GetUserByIdAsync(id);
             if (user == null)
             {
-                return NotFound(new { Message = "User not found." });
+                return NotFound(new { Message = "Kullanıcı bulunamadı." });
             }
 
             return Ok(user);
@@ -55,7 +56,7 @@ namespace ShoppingApp.WebApi.Controllers
         {
             if (user == null || user.Id != id)
             {
-                return BadRequest(new { Message = "Invalid user data." });
+                return BadRequest(new { Message = "Geçersiz kullanıcı bilgileri." });
             }
 
             try
@@ -65,15 +66,16 @@ namespace ShoppingApp.WebApi.Controllers
             }
             catch (UnauthorizedAccessException)
             {
-                return Unauthorized(new { Message = "You can only update your own data." });
+                return Unauthorized(new { Message = "Sadece kendi bilgilerinizi güncelleyebilirsiniz." });
             }
             catch (KeyNotFoundException)
             {
-                return NotFound(new { Message = "User not found." });
+                return NotFound(new { Message = "Kullanıcı bulunamadı." });
             }
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteUser(int id)
         {
             try
@@ -83,7 +85,7 @@ namespace ShoppingApp.WebApi.Controllers
             }
             catch (KeyNotFoundException)
             {
-                return NotFound(new { Message = "User not found." });
+                return NotFound(new { Message = "Kullanıcı bulunamadı." });
             }
         }
     }

@@ -12,7 +12,6 @@ namespace ShoppingApp.Business.Dtos
         [Required]
         public int Id { get; set; }
 
-        [Required]
         public List<int> ProductIds { get; set; } = new List<int>();
     }
 }

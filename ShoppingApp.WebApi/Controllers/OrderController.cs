@@ -7,6 +7,7 @@ using ShoppingApp.Business.Dtos;
 
 namespace ShoppingApp.WebApi.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class OrderController : ControllerBase
@@ -19,7 +20,6 @@ namespace ShoppingApp.WebApi.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Customer")]
         public async Task<IActionResult> CreateOrder([FromBody] CreateOrderDto orderDto)
         {
             if (!ModelState.IsValid)
@@ -47,11 +47,10 @@ namespace ShoppingApp.WebApi.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin,Customer")]
         public async Task<IActionResult> UpdateOrder(int id, [FromBody] UpdateOrderDto orderDto)
         {
             if (id != orderDto.Id)
-                return BadRequest("Geçersiz sipariş bilgileri.");
+                return BadRequest("Geçersiz sipariş bilgisi.");
 
             try
             {
@@ -65,11 +64,10 @@ namespace ShoppingApp.WebApi.Controllers
         }
 
         [HttpPatch("{id}")]
-        [Authorize(Roles = "Admin,Customer")]
         public async Task<IActionResult> PatchOrder(int id, [FromBody] UpdateOrderDto orderDto)
         {
             if (id != orderDto.Id)
-                return BadRequest("Geçersiz sipariş bilgileri.");
+                return BadRequest("Geçersiz sipariş bilgilsi.");
 
             try
             {
@@ -83,7 +81,6 @@ namespace ShoppingApp.WebApi.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteOrder(int id)
         {
             try
