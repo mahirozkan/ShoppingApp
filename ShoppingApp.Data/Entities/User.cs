@@ -28,10 +28,4 @@ namespace ShoppingApp.Data.Entities
         public Role Role { get; set; }
 
     }
-
-    public enum Role
-    {
-        Customer = 0,
-        Admin = 1
-    }
 }

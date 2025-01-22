@@ -1,136 +1,111 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using ShoppingApp.Business.Dtos;
 using ShoppingApp.Business.Interfaces;
 using ShoppingApp.Business.Types;
 using ShoppingApp.Data.Context;
 using ShoppingApp.Data.Entities;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
-public class UserService : IUserService
+namespace ShoppingApp.Business.Services
 {
-    private readonly ShoppingAppDbContext _context;
-    private readonly IPasswordHasher _passwordHasher;
-
-    public UserService(ShoppingAppDbContext context, IPasswordHasher passwordHasher)
+    public class UserService : IUserService
     {
-        _context = context;
-        _passwordHasher = passwordHasher;
-    }
+        private readonly ShoppingAppDbContext _context;
+        private readonly IDataProtector _dataProtector;
+        private readonly PasswordHasher<User> _passwordHasher;
 
-    // Kullanıcı oluşturma (şifre hash'leme işlemi)
-    public async Task<User> CreateUserAsync(User user, string password)
-    {
-        // Şifreyi hash'liyoruz
-        user.Password = _passwordHasher.HashPassword(password);
-
-        _context.Users.Add(user);
-        await _context.SaveChangesAsync();
-        return user;
-    }
-
-    // Kullanıcıyı ID'ye göre bulma
-    public async Task<User> GetUserByIdAsync(int id)
-    {
-        return await _context.Users
-            .FirstOrDefaultAsync(u => u.Id == id);
-    }
-
-    // Kullanıcı bilgilerini güncelleme (şifre değişikliği de yapılabilir)
-    public async Task UpdateUserAsync(User user, int currentUserId, string newPassword = null)
-    {
-        // ID değiştirilmemeli
-        if (user.Id != currentUserId)
+        public UserService(ShoppingAppDbContext context, IDataProtectionProvider dataProtectionProvider)
         {
-            throw new UnauthorizedAccessException("Sadece kendi hesabınızı güncelleyebilirsiniz.");
+            _context = context;
+            _dataProtector = dataProtectionProvider.CreateProtector("ShoppingApp.Data.Protector");
+            _passwordHasher = new PasswordHasher<User>();
         }
 
-        // Kullanıcı rolü değiştirilmemeli
-        var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Id == user.Id);
-        if (existingUser == null)
+        public async Task<User> CreateUserAsync(User user, string password)
         {
-            throw new KeyNotFoundException("Kullanıcı bulunamadı.");
+            user.Password = _passwordHasher.HashPassword(user, password);
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+            return user;
         }
 
-        if (user.Role != existingUser.Role)
+        public async Task<User> GetUserByIdAsync(int id)
         {
-            throw new UnauthorizedAccessException("Rol değiştirilemez.");
+            return await _context.Users.FindAsync(id);
         }
 
-        // Şifre varsa, hash'leyip güncelliyoruz
-        if (!string.IsNullOrEmpty(newPassword))
+        public async Task UpdateUserAsync(User user, int currentUserId, string newPassword = null)
         {
-            user.Password = _passwordHasher.HashPassword(newPassword);
-        }
+            var existingUser = await GetUserByIdAsync(user.Id);
 
-        // Güncellenen bilgileri mevcut kullanıcıyla birleştiriyoruz
-        existingUser.FirstName = user.FirstName;
-        existingUser.LastName = user.LastName;
-        existingUser.Email = user.Email;
-        existingUser.PhoneNumber = user.PhoneNumber;
-        existingUser.Role = user.Role; // Role değiştirilemiyor, sadece mevcut role uygun olmalı
+            if (existingUser == null)
+                throw new KeyNotFoundException("Kullanıcı bulunamadı.");
 
-        // Veritabanında güncelleniyor
-        _context.Users.Update(existingUser);
-        await _context.SaveChangesAsync();
-    }
+            existingUser.FirstName = user.FirstName;
+            existingUser.LastName = user.LastName;
+            existingUser.Email = user.Email;
+            existingUser.PhoneNumber = user.PhoneNumber;
 
-    // Kullanıcıyı silme
-    public async Task DeleteUserAsync(int id)
-    {
-        var user = await _context.Users.FindAsync(id);
-        if (user == null)
-        {
-            throw new KeyNotFoundException("Kullanıcı bulunamadı.");
-        }
-
-        _context.Users.Remove(user);
-        await _context.SaveChangesAsync();
-    }
-
-    // Kullanıcı adı ve şifre ile kullanıcıyı doğrulama (login)
-    public async Task<User> AuthenticateAsync(string email, string password)
-    {
-        var user = await _context.Users.SingleOrDefaultAsync(u => u.Email == email);
-
-        if (user == null || !_passwordHasher.VerifyPassword(user.Password, password))
-            return null;
-
-        return user;
-    }
-
-    // Kullanıcı giriş yaparken kullanılan işlem
-    public async Task<ServiceMessage<UserInfoDto>> LoginUserAsync(LoginUserDto user)
-    {
-        var userEntity = await _context.Users
-            .SingleOrDefaultAsync(x => x.Email.ToLower() == user.Email.ToLower());
-
-        if (userEntity == null)
-        {
-            return new ServiceMessage<UserInfoDto>
+            if (!string.IsNullOrEmpty(newPassword))
             {
-                IsSucceed = false,
-                Message = "Kullanıcı adı veya şifre hatalı!"
-            };
-        }
-
-        if (!_passwordHasher.VerifyPassword(userEntity.Password, user.Password))
-        {
-            return new ServiceMessage<UserInfoDto>
-            {
-                IsSucceed = false,
-                Message = "Kullanıcı adı veya şifre hatalı!"
-            };
-        }
-
-        return new ServiceMessage<UserInfoDto>
-        {
-            IsSucceed = true,
-            Data = new UserInfoDto
-            {
-                Email = userEntity.Email,
-                FirstName = userEntity.FirstName,
-                LastName = userEntity.LastName,
-                Role = userEntity.Role,
+                existingUser.Password = _passwordHasher.HashPassword(existingUser, newPassword);
             }
-        };
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task DeleteUserAsync(int id)
+        {
+            var user = await GetUserByIdAsync(id);
+
+            if (user == null)
+                throw new KeyNotFoundException("Kullanıcı bulunamadı.");
+
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<User> AuthenticateAsync(string email, string password)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+
+            if (user == null || _passwordHasher.VerifyHashedPassword(user, user.Password, password) != PasswordVerificationResult.Success)
+            {
+                return null;
+            }
+
+            return user;
+        }
+
+        public async Task<ServiceMessage<UserInfoDto>> LoginUserAsync(LoginUserDto userDto)
+        {
+            var user = await AuthenticateAsync(userDto.Email, userDto.Password);
+
+            if (user == null)
+            {
+                return new ServiceMessage<UserInfoDto>
+                {
+                    IsSucceed = false,
+                    Message = "Geçersiz kullanıcı adı veya şifre."
+                };
+            }
+
+            return new ServiceMessage<UserInfoDto>
+            {
+                IsSucceed = true,
+                Message = "Giriş başarılı.",
+                Data = new UserInfoDto
+                {
+                    Id = user.Id,
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
+                    Email = user.Email,
+                    Role = user.Role
+                }
+            };
+        }
     }
 }
