@@ -1,4 +1,6 @@
 ﻿using Microsoft.IdentityModel.Tokens;
+using ShoppingApp.WebApi.Jwt;
+using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -10,27 +12,29 @@ namespace ShoppingApp.WebApi.Jwt
         public static string GenerateJwtToken(JwtDto jwtInfo)
         {
             var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtInfo.SecretKey));
-
             var credentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
 
             var claims = new[]
             {
                 new Claim(JwtClaimNames.Id, jwtInfo.Id.ToString()),
+                new Claim(JwtClaimNames.Email, jwtInfo.Email),
                 new Claim(JwtClaimNames.FirstName, jwtInfo.FirstName),
                 new Claim(JwtClaimNames.LastName, jwtInfo.LastName),
-                new Claim(JwtClaimNames.Email, jwtInfo.Email),
                 new Claim(JwtClaimNames.Role, jwtInfo.Role.ToString()),
-
                 new Claim(ClaimTypes.Role, jwtInfo.Role.ToString())
             };
 
-            var expireTime = DateTime.Now.AddMinutes(jwtInfo.ExpiryInMinutes);
+            var expireTime = DateTime.UtcNow.AddMinutes(jwtInfo.ExpiryInMinutes);
 
-            var tokenDescriptor = new JwtSecurityToken(jwtInfo.Issuer, jwtInfo.Audience, claims, null, expireTime, credentials);
+            var tokenDescriptor = new JwtSecurityToken(
+                jwtInfo.Issuer,
+                jwtInfo.Audience,
+                claims,
+                expires: expireTime,
+                signingCredentials: credentials
+            );
 
-            var token = new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
-
-            return token;
+            return new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
         }
     }
 }
