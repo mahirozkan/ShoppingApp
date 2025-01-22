@@ -24,12 +24,29 @@ namespace ShoppingApp.Business.Services
             _passwordHasher = new PasswordHasher<User>();
         }
 
-        public async Task<User> CreateUserAsync(User user, string password)
+        public async Task<ServiceMessage<User>> CreateUserAsync(User user, string password)
         {
+            var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == user.Email);
+
+            if (existingUser != null)
+            {
+                return new ServiceMessage<User>
+                {
+                    IsSucceed = false,
+                    Message = "Bu e-posta adresi zaten kayıtlı."
+                };
+            }
+
             user.Password = _passwordHasher.HashPassword(user, password);
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
-            return user;
+
+            return new ServiceMessage<User>
+            {
+                IsSucceed = true,
+                Message = "Kullanıcı başarıyla oluşturuldu.",
+                Data = user
+            };
         }
 
         public async Task<User> GetUserByIdAsync(int id)

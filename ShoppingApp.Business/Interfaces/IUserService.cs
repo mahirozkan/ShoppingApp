@@ -7,11 +7,11 @@ namespace ShoppingApp.Business.Interfaces
 {
     public interface IUserService
     {
-        Task<User> CreateUserAsync(User user, string password);
+        Task<ServiceMessage<User>> CreateUserAsync(User user, string password);
         Task<User> GetUserByIdAsync(int id);
         Task UpdateUserAsync(User user, int currentUserId, string newPassword = null);
         Task DeleteUserAsync(int id);
         Task<User> AuthenticateAsync(string email, string password);
-        Task<ServiceMessage<UserInfoDto>> LoginUserAsync(LoginUserDto user);
+        Task<ServiceMessage<UserInfoDto>> LoginUserAsync(LoginUserDto userDto);
     }
 }

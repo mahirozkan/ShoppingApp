@@ -37,7 +37,7 @@ namespace ShoppingApp.WebApi.Controllers
             }
 
             var createdUser = await _userService.CreateUserAsync(user, user.Password);
-            return CreatedAtAction(nameof(GetUserById), new { id = createdUser.Id }, createdUser);
+            return CreatedAtAction(nameof(GetUserById), new { id = createdUser.Data.Id }, createdUser);
         }
 
         [Authorize]
