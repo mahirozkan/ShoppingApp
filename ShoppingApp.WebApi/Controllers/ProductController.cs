@@ -1,13 +1,12 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using ShoppingApp.Business.Dtos;
 using ShoppingApp.Business.Interfaces;
+using System.Threading.Tasks;
 
 namespace ShoppingApp.WebApi.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
     public class ProductController : ControllerBase
     {
         private readonly IProductService _productService;
@@ -21,10 +20,6 @@ namespace ShoppingApp.WebApi.Controllers
         public async Task<IActionResult> GetAllProducts()
         {
             var products = await _productService.GetAllProductsAsync();
-            if (products == null || products.Count == 0)
-            {
-                return NotFound("Ürün bulunamadı.");
-            }
             return Ok(products);
         }
 
@@ -32,57 +27,56 @@ namespace ShoppingApp.WebApi.Controllers
         public async Task<IActionResult> GetProductById(int id)
         {
             var product = await _productService.GetProductByIdAsync(id);
+
             if (product == null)
-            {
-                return NotFound($"Id'si {id} olan ürün bulunamadı.");
-            }
+                return NotFound(new { Message = "Ürün bulunamadı." });
+
             return Ok(product);
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> CreateProduct([FromBody] ProductCreateModelDto model)
+        public async Task<IActionResult> CreateProduct([FromBody] ProductCreateModelDto productDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+            var result = await _productService.CreateProductAsync(productDto);
 
-            var createdProduct = await _productService.CreateProductAsync(model);
-            return CreatedAtAction(nameof(GetProductById), new { id = createdProduct.Id }, createdProduct);
+            if (!result.IsSucceed)
+                return BadRequest(new { Message = result.Message });
+
+            return Created("", new { Message = result.Message });
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> UpdateProduct(int id, [FromBody] ProductUpdateModelDto model)
+        public async Task<IActionResult> UpdateProduct(int id, [FromBody] ProductUpdateModelDto productDto)
         {
-            if (id != model.Id)
-            {
-                return BadRequest("Ürün Id'si uyuşmuyor.");
-            }
+            var result = await _productService.UpdateProductAsync(id, productDto);
 
-            var existingProduct = await _productService.GetProductByIdAsync(id);
-            if (existingProduct == null)
-            {
-                return NotFound($"Id'si {id} olan ürün bulunamadı.");
-            }
+            if (!result.IsSucceed)
+                return NotFound(new { Message = result.Message });
 
-            await _productService.UpdateProductAsync(id, model);
-            return NoContent(); 
+            return Ok(new { Message = result.Message });
         }
 
+        [HttpPatch("{id}")]
+        public async Task<IActionResult> PatchProduct(int id, [FromBody] ProductPatchModelDto productDto)
+        {
+            var result = await _productService.PatchProductAsync(id, productDto);
+
+            if (!result.IsSucceed)
+                return NotFound(new { Message = result.Message });
+
+            return Ok(new { Message = result.Message });
+        }
+
+
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteProduct(int id)
         {
-            var product = await _productService.GetProductByIdAsync(id);
-            if (product == null)
-            {
-                return NotFound($"Id'si {id} olan ürün bulunamadı.");
-            }
+            var result = await _productService.DeleteProductAsync(id);
 
-            await _productService.DeleteProductAsync(id);
-            return NoContent(); 
+            if (!result.IsSucceed)
+                return NotFound(new { Message = result.Message });
+
+            return Ok(new { Message = result.Message });
         }
     }
 }

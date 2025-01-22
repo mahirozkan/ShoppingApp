@@ -1,8 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
-using ShoppingApp.Business.Dtos;
+﻿using ShoppingApp.Business.Dtos;
 using ShoppingApp.Business.Interfaces;
+using ShoppingApp.Business.Types;
 using ShoppingApp.Data.Context;
 using ShoppingApp.Data.Entities;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace ShoppingApp.Business.Services
 {
@@ -15,17 +18,35 @@ namespace ShoppingApp.Business.Services
             _context = context;
         }
 
-        public async Task<List<Product>> GetAllProductsAsync()
+        public async Task<List<ProductDto>> GetAllProductsAsync()
         {
-            return await _context.Products.ToListAsync();
+            return _context.Products
+                .Select(p => new ProductDto
+                {
+                    Id = p.Id,
+                    ProductName = p.ProductName,
+                    Price = p.Price,
+                    StockQuantity = p.StockQuantity
+                })
+                .ToList();
         }
 
-        public async Task<Product> GetProductByIdAsync(int id)
+        public async Task<ProductDto> GetProductByIdAsync(int id)
         {
-            return await _context.Products.FirstOrDefaultAsync(p => p.Id == id);
+            var product = await _context.Products.FindAsync(id);
+            if (product == null)
+                return null;
+
+            return new ProductDto
+            {
+                Id = product.Id,
+                ProductName = product.ProductName,
+                Price = product.Price,
+                StockQuantity = product.StockQuantity
+            };
         }
 
-        public async Task<Product> CreateProductAsync(ProductCreateModelDto model)
+        public async Task<ServiceMessage> CreateProductAsync(ProductCreateModelDto model)
         {
             var product = new Product
             {
@@ -34,34 +55,94 @@ namespace ShoppingApp.Business.Services
                 StockQuantity = model.StockQuantity
             };
 
-            _context.Products.Add(product);
+            await _context.Products.AddAsync(product);
             await _context.SaveChangesAsync();
 
-            return product;
+            return new ServiceMessage
+            {
+                IsSucceed = true,
+                Message = "Ürün başarıyla oluşturuldu."
+            };
         }
 
-        public async Task UpdateProductAsync(int id, ProductUpdateModelDto model)
+        public async Task<ServiceMessage> UpdateProductAsync(int id, ProductUpdateModelDto model)
         {
             var product = await _context.Products.FindAsync(id);
-            if (product != null)
+            if (product == null)
             {
+                return new ServiceMessage
+                {
+                    IsSucceed = false,
+                    Message = "Ürün bulunamadı."
+                };
+            }
+
+            product.ProductName = model.ProductName;
+            product.Price = model.Price;
+            product.StockQuantity = model.StockQuantity;
+
+            _context.Products.Update(product);
+            await _context.SaveChangesAsync();
+
+            return new ServiceMessage
+            {
+                IsSucceed = true,
+                Message = "Ürün başarıyla güncellendi."
+            };
+        }
+
+        public async Task<ServiceMessage> PatchProductAsync(int id, ProductPatchModelDto model)
+        {
+            var product = await _context.Products.FindAsync(id);
+            if (product == null)
+            {
+                return new ServiceMessage
+                {
+                    IsSucceed = false,
+                    Message = "Ürün bulunamadı."
+                };
+            }
+
+            if (model.ProductName != null)
                 product.ProductName = model.ProductName;
-                product.Price = model.Price;
-                product.StockQuantity = model.StockQuantity;
 
-                _context.Products.Update(product);
-                await _context.SaveChangesAsync();
-            }
+            if (model.Price.HasValue)
+                product.Price = model.Price.Value;
+
+            if (model.StockQuantity.HasValue)
+                product.StockQuantity = model.StockQuantity.Value;
+
+            _context.Products.Update(product);
+            await _context.SaveChangesAsync();
+
+            return new ServiceMessage
+            {
+                IsSucceed = true,
+                Message = "Ürün başarıyla güncellendi."
+            };
         }
 
-        public async Task DeleteProductAsync(int id)
+
+        public async Task<ServiceMessage> DeleteProductAsync(int id)
         {
             var product = await _context.Products.FindAsync(id);
-            if (product != null)
+            if (product == null)
             {
-                _context.Products.Remove(product);
-                await _context.SaveChangesAsync();
+                return new ServiceMessage
+                {
+                    IsSucceed = false,
+                    Message = "Ürün bulunamadı."
+                };
             }
+
+            _context.Products.Remove(product);
+            await _context.SaveChangesAsync();
+
+            return new ServiceMessage
+            {
+                IsSucceed = true,
+                Message = "Ürün başarıyla silindi."
+            };
         }
     }
 }
