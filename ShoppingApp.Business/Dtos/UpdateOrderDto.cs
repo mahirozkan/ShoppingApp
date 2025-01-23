@@ -9,9 +9,8 @@ namespace ShoppingApp.Business.Dtos
 {
     public class UpdateOrderDto
     {
-        [Required]
-        public int Id { get; set; }
-
-        public List<int> ProductIds { get; set; } = new List<int>();
+        public DateTime OrderDate { get; set; }
+        public decimal TotalAmount { get; set; }
+        public int CustomerId { get; set; }
     }
 }

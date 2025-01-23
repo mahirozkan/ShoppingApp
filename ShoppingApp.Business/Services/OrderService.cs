@@ -1,12 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ShoppingApp.Business.Dtos;
 using ShoppingApp.Business.Interfaces;
+using ShoppingApp.Business.Types;
 using ShoppingApp.Data.Context;
 using ShoppingApp.Data.Entities;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace ShoppingApp.Business.Services
@@ -20,82 +19,119 @@ namespace ShoppingApp.Business.Services
             _context = context;
         }
 
-        public async Task<OrderDto> CreateOrderAsync(CreateOrderDto orderDto)
+        public async Task<ServiceMessage> CreateOrderAsync(CreateOrderDto orderDto)
         {
             var order = new Order
             {
-                CustomerId = orderDto.UserId,
-                OrderDate = DateTime.UtcNow,
-                OrderProducts = orderDto.ProductIds.Select(id => new OrderProduct { ProductId = id }).ToList(),
-                TotalAmount = 0 // Toplam tutar hesaplaması yapılabilir.
+                OrderDate = orderDto.OrderDate,
+                TotalAmount = orderDto.TotalAmount,
+                CustomerId = orderDto.CustomerId,
+                OrderProducts = orderDto.Products.Select(p => new OrderProduct
+                {
+                    ProductId = p.ProductId,
+                    Quantity = p.Quantity
+                }).ToList()
             };
 
-            _context.Orders.Add(order);
+            await _context.Orders.AddAsync(order);
             await _context.SaveChangesAsync();
 
-            return new OrderDto
+            return new ServiceMessage
             {
-                Id = order.Id,
-                UserId = order.CustomerId,
-                OrderDate = order.OrderDate,
-                ProductIds = orderDto.ProductIds,
-                TotalAmount = order.TotalAmount
+                IsSucceed = true,
+                Message = "Sipariş başarıyla oluşturuldu."
             };
         }
 
         public async Task<OrderDto> GetOrderByIdAsync(int orderId)
         {
             var order = await _context.Orders
-                .Include(o => o.OrderProducts)
-                .FirstOrDefaultAsync(o => o.Id == orderId);
+                .Where(o => o.Id == orderId)
+                .Select(o => new OrderDto
+                {
+                    Id = o.Id,
+                    OrderDate = o.OrderDate,
+                    TotalAmount = o.TotalAmount,
+                    CustomerId = o.CustomerId,
+                    Products = o.OrderProducts.Select(op => new OrderProductDto
+                    {
+                        ProductId = op.ProductId,
+                        ProductName = op.Product.ProductName,
+                        Quantity = op.Quantity
+                    }).ToList()
+                })
+                .FirstOrDefaultAsync();
 
-            if (order == null)
-                return null;
-
-            return new OrderDto
-            {
-                Id = order.Id,
-                UserId = order.CustomerId,
-                OrderDate = order.OrderDate,
-                ProductIds = order.OrderProducts.Select(op => op.ProductId).ToList(),
-                TotalAmount = order.TotalAmount
-            };
+            return order;
         }
 
         public async Task<IEnumerable<OrderDto>> GetAllOrdersAsync()
         {
-            var orders = await _context.Orders
-                .Include(o => o.OrderProducts)
+            return await _context.Orders
+                .Select(o => new OrderDto
+                {
+                    Id = o.Id,
+                    OrderDate = o.OrderDate,
+                    TotalAmount = o.TotalAmount,
+                    CustomerId = o.CustomerId,
+                    Products = o.OrderProducts.Select(op => new OrderProductDto
+                    {
+                        ProductId = op.ProductId,
+                        ProductName = op.Product.ProductName,
+                        Quantity = op.Quantity
+                    }).ToList()
+                })
                 .ToListAsync();
-
-            return orders.Select(order => new OrderDto
-            {
-                Id = order.Id,
-                UserId = order.CustomerId,
-                OrderDate = order.OrderDate,
-                ProductIds = order.OrderProducts.Select(op => op.ProductId).ToList(),
-                TotalAmount = order.TotalAmount
-            });
         }
 
-        public async Task UpdateOrderAsync(UpdateOrderDto orderDto)
-        {
-            var order = await _context.Orders.Include(o => o.OrderProducts).FirstOrDefaultAsync(o => o.Id == orderDto.Id);
-            if (order == null)
-                throw new KeyNotFoundException();
-
-            order.OrderProducts = orderDto.ProductIds.Select(id => new OrderProduct { OrderId = order.Id, ProductId = id }).ToList();
-            await _context.SaveChangesAsync();
-        }
-
-        public async Task DeleteOrderAsync(int orderId)
+        public async Task<ServiceMessage> UpdateOrderAsync(int orderId, UpdateOrderDto orderDto)
         {
             var order = await _context.Orders.FindAsync(orderId);
+
             if (order == null)
-                throw new KeyNotFoundException();
+            {
+                return new ServiceMessage
+                {
+                    IsSucceed = false,
+                    Message = "Sipariş bulunamadı."
+                };
+            }
+
+            order.OrderDate = orderDto.OrderDate;
+            order.TotalAmount = orderDto.TotalAmount;
+            order.CustomerId = orderDto.CustomerId;
+
+            _context.Orders.Update(order);
+            await _context.SaveChangesAsync();
+
+            return new ServiceMessage
+            {
+                IsSucceed = true,
+                Message = "Sipariş başarıyla güncellendi."
+            };
+        }
+
+        public async Task<ServiceMessage> DeleteOrderAsync(int orderId)
+        {
+            var order = await _context.Orders.FindAsync(orderId);
+
+            if (order == null)
+            {
+                return new ServiceMessage
+                {
+                    IsSucceed = false,
+                    Message = "Sipariş bulunamadı."
+                };
+            }
 
             _context.Orders.Remove(order);
             await _context.SaveChangesAsync();
+
+            return new ServiceMessage
+            {
+                IsSucceed = true,
+                Message = "Sipariş başarıyla silindi."
+            };
         }
     }
 }

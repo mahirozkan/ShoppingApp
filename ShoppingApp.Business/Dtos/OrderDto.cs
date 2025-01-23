@@ -9,15 +9,10 @@ namespace ShoppingApp.Business.Dtos
 {
     public class OrderDto
     {
-        [Required]
         public int Id { get; set; }
-        [Required]
-        public int UserId { get; set; }
-        [Required]
         public DateTime OrderDate { get; set; }
-        [Required]
         public decimal TotalAmount { get; set; }
-        
-        public List<int> ProductIds { get; set; } = new List<int>();
+        public int CustomerId { get; set; }
+        public List<OrderProductDto> Products { get; set; }
     }
 }
