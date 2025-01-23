@@ -1,9 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using ShoppingApp.Business.Dtos;
 using ShoppingApp.Business.Interfaces;
 using ShoppingApp.Data.Entities;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
-using ShoppingApp.Business.Dtos;
 
 namespace ShoppingApp.WebApi.Controllers
 {
@@ -12,32 +12,43 @@ namespace ShoppingApp.WebApi.Controllers
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
-        private readonly IPasswordHasher _passwordHasher;
 
-        public UsersController(IUserService userService, IPasswordHasher passwordHasher)
+        public UsersController(IUserService userService)
         {
             _userService = userService;
-            _passwordHasher = passwordHasher;
         }
 
         [HttpGet("admin")]
         [Authorize(Roles = "Admin")]
         public IActionResult GetAdminData()
         {
-            return Ok(new { message = "Kullanıcı Admin yetkisine sahip." });
+            return Ok(new { Message = "Kullanıcı Admin yetkisine sahip." });
         }
 
-        [HttpPost]
+        [HttpPost("register")]
         [AllowAnonymous]
-        public async Task<IActionResult> CreateUser([FromBody] User user)
+        public async Task<IActionResult> Register([FromBody] RegisterUserDto userDto)
         {
-            if (user == null || string.IsNullOrEmpty(user.Password))
+            if (!ModelState.IsValid)
             {
-                return BadRequest(new { Message = "Kullanıcı detayları gereklidir." });
+                return BadRequest(ModelState);
             }
 
-            var createdUser = await _userService.CreateUserAsync(user, user.Password);
-            return CreatedAtAction(nameof(GetUserById), new { id = createdUser.Data.Id }, createdUser);
+            var result = await _userService.CreateUserAsync(new User
+            {
+                FirstName = userDto.FirstName,
+                LastName = userDto.LastName,
+                Email = userDto.Email,
+                PhoneNumber = userDto.PhoneNumber,
+                Role = userDto.Role
+            }, userDto.Password);
+
+            if (!result.IsSucceed)
+            {
+                return BadRequest(new { Message = result.Message });
+            }
+
+            return Created("", new { Message = result.Message });
         }
 
         [Authorize]
@@ -50,108 +61,82 @@ namespace ShoppingApp.WebApi.Controllers
                 return NotFound(new { Message = "Kullanıcı bulunamadı." });
             }
 
-            return Ok(user);
+            var userDto = new
+            {
+                user.Id,
+                user.FirstName,
+                user.LastName,
+                user.Email,
+                user.PhoneNumber,
+                Role = user.Role.ToString() // Enum'u string olarak döndürüyoruz
+            };
+
+            return Ok(userDto);
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateUser(int id, [FromBody] UserUpdateDto userDto)
         {
-            if (userDto == null)
+            if (!ModelState.IsValid)
             {
-                return BadRequest(new { Message = "Geçersiz kullanıcı bilgileri." });
+                return BadRequest(ModelState);
             }
 
-            var currentUserId = int.Parse(User.Identity.Name);
+            var currentUserId = int.Parse(User.FindFirst("id")?.Value ?? "0");
             if (currentUserId != id && !User.IsInRole("Admin"))
             {
-                return Unauthorized(new { Message = "Sadece kendi bilgilerinizi güncelleyebilirsiniz veya admin rolüne sahip olmalısınız." });
+                return Unauthorized(new { Message = "Sadece kendi bilgilerinizi güncelleyebilirsiniz veya admin olmalısınız." });
             }
 
-            var user = await _userService.GetUserByIdAsync(id);
-            if (user == null)
+            var result = await _userService.UpdateUserAsync(new User
             {
-                return NotFound(new { Message = "Kullanıcı bulunamadı." });
-            }
+                Id = id,
+                FirstName = userDto.FirstName,
+                LastName = userDto.LastName,
+                Email = userDto.Email,
+                PhoneNumber = userDto.PhoneNumber
+            }, id, userDto.Password);
 
-            user.FirstName = userDto.FirstName;
-            user.LastName = userDto.LastName;
-            user.Email = userDto.Email;
-            user.PhoneNumber = userDto.PhoneNumber;
-
-            if (!string.IsNullOrEmpty(userDto.Password))
+            if (!result.IsSucceed)
             {
-                user.Password = _passwordHasher.HashPassword(userDto.Password);
+                return NotFound(new { Message = result.Message });
             }
 
-            await _userService.UpdateUserAsync(user, id);
-            return NoContent();
+            return Ok(new { Message = result.Message });
         }
 
 
         [HttpPatch("{id}")]
-        public async Task<IActionResult> PatchUser(int id, [FromBody] UserUpdateDto userDto)
+        public async Task<IActionResult> PatchUser(int id, [FromBody] UserPatchModelDto userDto)
         {
-            if (userDto == null)
+            if (!ModelState.IsValid)
             {
-                return BadRequest(new { Message = "Geçersiz kullanıcı bilgileri." });
+                return BadRequest(ModelState);
             }
 
-            var currentUserId = int.Parse(User.Identity.Name);
-            if (currentUserId != id && !User.IsInRole("Admin"))
+            var result = await _userService.PatchUserAsync(id, userDto);
+
+            if (!result.IsSucceed)
             {
-                return Unauthorized(new { Message = "Sadece kendi bilgilerinizi güncelleyebilirsiniz veya admin rolüne sahip olmalısınız." });
+                return NotFound(new { Message = result.Message });
             }
 
-            var user = await _userService.GetUserByIdAsync(id);
-            if (user == null)
-            {
-                return NotFound(new { Message = "Kullanıcı bulunamadı." });
-            }
-
-            if (!string.IsNullOrEmpty(userDto.FirstName))
-            {
-                user.FirstName = userDto.FirstName;
-            }
-
-            if (!string.IsNullOrEmpty(userDto.LastName))
-            {
-                user.LastName = userDto.LastName;
-            }
-
-            if (!string.IsNullOrEmpty(userDto.Email))
-            {
-                user.Email = userDto.Email;
-            }
-
-            if (!string.IsNullOrEmpty(userDto.PhoneNumber))
-            {
-                user.PhoneNumber = userDto.PhoneNumber;
-            }
-
-            if (!string.IsNullOrEmpty(userDto.Password))
-            {
-                user.Password = _passwordHasher.HashPassword(userDto.Password);
-            }
-
-            await _userService.UpdateUserAsync(user, id);
-            return NoContent();
+            return Ok(new { Message = result.Message });
         }
-
-
 
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteUser(int id)
         {
-            try
+            var result = await _userService.DeleteUserAsync(id);
+
+            if (!result.IsSucceed)
             {
-                await _userService.DeleteUserAsync(id);
-                return NoContent();
+                return NotFound(new { Message = result.Message });
             }
-            catch (KeyNotFoundException)
-            {
-                return NotFound(new { Message = "Kullanıcı bulunamadı." });
-            }
+
+            return NoContent();
         }
+
     }
 }

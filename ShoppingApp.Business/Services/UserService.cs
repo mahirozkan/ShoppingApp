@@ -54,12 +54,18 @@ namespace ShoppingApp.Business.Services
             return await _context.Users.FindAsync(id);
         }
 
-        public async Task UpdateUserAsync(User user, int currentUserId, string newPassword = null)
+        public async Task<ServiceMessage> UpdateUserAsync(User user, int currentUserId, string newPassword = null)
         {
-            var existingUser = await GetUserByIdAsync(user.Id);
+            var existingUser = await _context.Users.FindAsync(user.Id);
 
             if (existingUser == null)
-                throw new KeyNotFoundException("Kullanıcı bulunamadı.");
+            {
+                return new ServiceMessage
+                {
+                    IsSucceed = false,
+                    Message = "Kullanıcı bulunamadı."
+                };
+            }
 
             existingUser.FirstName = user.FirstName;
             existingUser.LastName = user.LastName;
@@ -71,19 +77,39 @@ namespace ShoppingApp.Business.Services
                 existingUser.Password = _passwordHasher.HashPassword(existingUser, newPassword);
             }
 
+            _context.Users.Update(existingUser);
             await _context.SaveChangesAsync();
+
+            return new ServiceMessage
+            {
+                IsSucceed = true,
+                Message = "Kullanıcı başarıyla güncellendi."
+            };
         }
 
-        public async Task DeleteUserAsync(int id)
-        {
-            var user = await GetUserByIdAsync(id);
 
+        public async Task<ServiceMessage> DeleteUserAsync(int id)
+        {
+            var user = await _context.Users.FindAsync(id);
             if (user == null)
-                throw new KeyNotFoundException("Kullanıcı bulunamadı.");
+            {
+                return new ServiceMessage
+                {
+                    IsSucceed = false,
+                    Message = "Kullanıcı bulunamadı."
+                };
+            }
 
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
+
+            return new ServiceMessage
+            {
+                IsSucceed = true,
+                Message = "Kullanıcı başarıyla silindi."
+            };
         }
+
 
         public async Task<User> AuthenticateAsync(string email, string password)
         {
@@ -122,6 +148,41 @@ namespace ShoppingApp.Business.Services
                     Email = user.Email,
                     Role = user.Role
                 }
+            };
+        }
+
+        public async Task<ServiceMessage> PatchUserAsync(int id, UserPatchModelDto userDto)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
+            {
+                return new ServiceMessage
+                {
+                    IsSucceed = false,
+                    Message = "Kullanıcı bulunamadı."
+                };
+            }
+
+            // Gelen alanlar boş değilse güncelleme yapılır
+            if (!string.IsNullOrEmpty(userDto.FirstName))
+                user.FirstName = userDto.FirstName;
+
+            if (!string.IsNullOrEmpty(userDto.LastName))
+                user.LastName = userDto.LastName;
+
+            if (!string.IsNullOrEmpty(userDto.Email))
+                user.Email = userDto.Email;
+
+            if (!string.IsNullOrEmpty(userDto.PhoneNumber))
+                user.PhoneNumber = userDto.PhoneNumber;
+
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+
+            return new ServiceMessage
+            {
+                IsSucceed = true,
+                Message = "Kullanıcı başarıyla güncellendi."
             };
         }
     }

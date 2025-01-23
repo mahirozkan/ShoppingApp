@@ -5,13 +5,16 @@ namespace ShoppingApp.Business.Dtos
 {
     public class RegisterUserDto
     {
-        [Required, MaxLength(50)]
+        [Required]
+        [MaxLength(50)]
         public string FirstName { get; set; }
-        [Required, MaxLength(50)]
+        [Required]
+        [MaxLength(50)]
         public string LastName { get; set; }
-        [Required, EmailAddress]
+        [Required]
+        [EmailAddress]
         public string Email { get; set; }
-        [Required, Phone]
+        [Required]
         public string PhoneNumber { get; set; }
         [Required]
         public string Password { get; set; }

@@ -9,9 +9,10 @@ namespace ShoppingApp.Business.Interfaces
     {
         Task<ServiceMessage<User>> CreateUserAsync(User user, string password);
         Task<User> GetUserByIdAsync(int id);
-        Task UpdateUserAsync(User user, int currentUserId, string newPassword = null);
-        Task DeleteUserAsync(int id);
+        Task<ServiceMessage> UpdateUserAsync(User user, int currentUserId, string newPassword = null);
+        Task<ServiceMessage> DeleteUserAsync(int id);
         Task<User> AuthenticateAsync(string email, string password);
         Task<ServiceMessage<UserInfoDto>> LoginUserAsync(LoginUserDto userDto);
+        Task<ServiceMessage> PatchUserAsync(int id, UserPatchModelDto userDto);
     }
 }
