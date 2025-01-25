@@ -65,10 +65,17 @@ namespace ShoppingApp.WebApi.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> PatchProduct(int id, [FromBody] ProductPatchModelDto productDto)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             var result = await _productService.PatchProductAsync(id, productDto);
 
             if (!result.IsSucceed)
+            {
                 return NotFound(new { Message = result.Message });
+            }
 
             return Ok(new { Message = result.Message });
         }

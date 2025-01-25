@@ -91,7 +91,7 @@ namespace ShoppingApp.Business.Services
             };
         }
 
-        public async Task<ServiceMessage> PatchProductAsync(int id, ProductPatchModelDto model)
+        public async Task<ServiceMessage> PatchProductAsync(int id, ProductPatchModelDto productDto)
         {
             var product = await _context.Products.FindAsync(id);
             if (product == null)
@@ -103,16 +103,23 @@ namespace ShoppingApp.Business.Services
                 };
             }
 
-            if (model.ProductName != null)
-                product.ProductName = model.ProductName;
+            // Alan güncellemeleri
+            if (!string.IsNullOrEmpty(productDto.ProductName))
+            {
+                product.ProductName = productDto.ProductName;
+            }
 
-            if (model.Price.HasValue)
-                product.Price = model.Price.Value;
+            if (productDto.Price.HasValue)
+            {
+                product.Price = productDto.Price.Value;
+            }
 
-            if (model.StockQuantity.HasValue)
-                product.StockQuantity = model.StockQuantity.Value;
+            if (productDto.StockQuantity.HasValue)
+            {
+                product.StockQuantity = productDto.StockQuantity.Value;
+            }
 
-            _context.Products.Update(product);
+            // Veritabanına kaydet
             await _context.SaveChangesAsync();
 
             return new ServiceMessage
@@ -121,6 +128,7 @@ namespace ShoppingApp.Business.Services
                 Message = "Ürün başarıyla güncellendi."
             };
         }
+
 
 
         public async Task<ServiceMessage> DeleteProductAsync(int id)

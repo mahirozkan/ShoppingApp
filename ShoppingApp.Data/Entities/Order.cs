@@ -9,11 +9,8 @@ namespace ShoppingApp.Data.Entities
     {
         [Key]
         public int Id { get; set; }
-        [Required]
         public DateTime OrderDate { get; set; }
-        [Required]
         public decimal TotalAmount { get; set; }
-        [Required]
         public int CustomerId { get; set; }
         [ForeignKey("CustomerId")]
         public User Customer { get; set; }
