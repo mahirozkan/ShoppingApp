@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using System;
 using System.Net;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 public class GlobalExceptionHandlerMiddleware
@@ -23,21 +24,38 @@ public class GlobalExceptionHandlerMiddleware
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Bir şeyler yanlış gitti: {ex}");
+            _logger.LogError($"Bir hata oluştu: {ex}");
             await HandleExceptionAsync(httpContext, ex);
         }
     }
 
     private Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
-        context.Response.ContentType = "application/json";
-        context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+        var statusCode = (int)HttpStatusCode.InternalServerError;
+        var message = "Sunucu tarafında bir hata oluştu.";
+        var detail = exception.Message;
 
-        var errorInfo = new
+        if (exception is UnauthorizedAccessException)
         {
-            message = "Internal Server Error",
-            detail = exception.Message
+            statusCode = (int)HttpStatusCode.Unauthorized;
+            message = "Yetkisiz erişim.";
+        }
+        else if (exception is KeyNotFoundException)
+        {
+            statusCode = (int)HttpStatusCode.NotFound;
+            message = "Kaynak bulunamadı.";
+        }
+
+        var errorResponse = new
+        {
+            statusCode,
+            message,
+            detail
         };
-        return context.Response.WriteAsync(errorInfo.ToString());
+
+        context.Response.ContentType = "application/json";
+        context.Response.StatusCode = statusCode;
+
+        return context.Response.WriteAsync(JsonSerializer.Serialize(errorResponse));
     }
 }

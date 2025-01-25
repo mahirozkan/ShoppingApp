@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using ShoppingApp.Business.Dtos;
 using ShoppingApp.Business.Interfaces;
+using ShoppingApp.WebApi.Filters;
 using ShoppingApp.WebApi.Jwt;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -48,6 +49,7 @@ namespace ShoppingApp.WebApi.Controllers
         }
 
         [HttpPost]
+        [ServiceFilter(typeof(TimeBasedAuthorizationFilter))]
         public async Task<IActionResult> CreateOrder([FromBody] CreateOrderDto orderDto)
         {
             if (!ModelState.IsValid)
@@ -66,6 +68,7 @@ namespace ShoppingApp.WebApi.Controllers
         }
 
         [HttpPut("{id}")]
+        [ServiceFilter(typeof(TimeBasedAuthorizationFilter))]
         public async Task<IActionResult> UpdateOrder(int id, [FromBody] UpdateOrderDto orderDto)
         {
             if (!ModelState.IsValid)

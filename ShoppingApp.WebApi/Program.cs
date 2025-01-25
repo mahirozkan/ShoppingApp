@@ -5,6 +5,8 @@ using Microsoft.OpenApi.Models;
 using ShoppingApp.Business.Interfaces;
 using ShoppingApp.Business.Services;
 using ShoppingApp.Data.Context;
+using ShoppingApp.WebApi.Filters;
+using ShoppingApp.WebApi.Middlewares;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -58,7 +60,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 var connectionString = builder.Configuration.GetConnectionString("default");
 builder.Services.AddDbContext<ShoppingAppDbContext>(options => options.UseSqlServer(connectionString));
 
-
+builder.Services.AddScoped<TimeBasedAuthorizationFilter>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IProductService, ProductService>();
@@ -77,6 +79,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseMiddleware<MaintenanceMiddleware>();
 app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 app.UseMiddleware<LoggingMiddleware>();
 app.UseHttpsRedirection();

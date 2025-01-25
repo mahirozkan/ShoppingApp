@@ -68,7 +68,7 @@ namespace ShoppingApp.WebApi.Controllers
                 user.LastName,
                 user.Email,
                 user.PhoneNumber,
-                Role = user.Role.ToString() // Enum'u string olarak döndürüyoruz
+                Role = user.Role.ToString()
             };
 
             return Ok(userDto);
