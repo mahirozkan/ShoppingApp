@@ -1,5 +1,7 @@
 # ShoppingApp
 
+![Database Diyagramı](https://github.com/mahirozkan/ShoppingApp/blob/master/dbdiagram.png)
+
 ShoppingApp, bir online alışveriş platformu API’sidir. ASP.NET Core ile geliştirilmiştir ve Entity Framework Code First yaklaşımı kullanılarak veritabanı işlemleri gerçekleştirilmiştir. JWT tabanlı kimlik doğrulama ve yetkilendirme, katmanlı mimari, özel middleware'ler ve global exception handling gibi modern yazılım mimarisi prensiplerini barındırır.
 
 ## Özellikler
