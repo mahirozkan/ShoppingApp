@@ -111,10 +111,9 @@ namespace ShoppingApp.Business.Services
             };
         }
 
-        public async Task<ServiceMessage> DeleteOrderAsync(int orderId)
+        public async Task<ServiceMessage> DeleteOrderAsync(int id)
         {
-            var order = await _context.Orders.FindAsync(orderId);
-
+            var order = await _context.Orders.Include(o => o.OrderProducts).FirstOrDefaultAsync(o => o.Id == id);
             if (order == null)
             {
                 return new ServiceMessage
@@ -123,6 +122,8 @@ namespace ShoppingApp.Business.Services
                     Message = "Sipariş bulunamadı."
                 };
             }
+
+            _context.OrderProducts.RemoveRange(order.OrderProducts);
 
             _context.Orders.Remove(order);
             await _context.SaveChangesAsync();

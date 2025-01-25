@@ -61,6 +61,7 @@ var connectionString = builder.Configuration.GetConnectionString("default");
 builder.Services.AddDbContext<ShoppingAppDbContext>(options => options.UseSqlServer(connectionString));
 
 builder.Services.AddScoped<TimeBasedAuthorizationFilter>();
+builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IProductService, ProductService>();
