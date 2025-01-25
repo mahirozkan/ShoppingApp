@@ -20,6 +20,13 @@ namespace ShoppingApp.WebApi.Controllers
         {
             _orderService = orderService;
         }
+        private bool IsUserAuthorizedToAccessOrder(int orderCustomerId)
+        {
+            var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+            var userId = int.Parse(User.FindFirst(JwtClaimNames.Id)?.Value);
+
+            return userRole == "Admin" || userId == orderCustomerId;
+        }
 
         [HttpGet]
         [Authorize(Roles = "Admin")]
@@ -37,12 +44,9 @@ namespace ShoppingApp.WebApi.Controllers
             if (order == null)
                 return NotFound(new { Message = "Sipariş bulunamadı." });
 
-            var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
-            var userId = int.Parse(User.FindFirst(JwtClaimNames.Id)?.Value);
-
-            if (userRole == "Customer" && order.CustomerId != userId)
+            if (!IsUserAuthorizedToAccessOrder(order.CustomerId))
             {
-                return Forbid();
+                return BadRequest(new { Message = "Bu sipariş bilgilerine erişim yetkiniz yok." });
             }
 
             return Ok(order);
@@ -76,16 +80,13 @@ namespace ShoppingApp.WebApi.Controllers
                 return BadRequest(new { Message = "Geçersiz model verisi.", Errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage) });
             }
 
-            var userId = int.Parse(User.FindFirst(JwtClaimNames.Id)?.Value);
-            var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
-
             var existingOrder = await _orderService.GetOrderByIdAsync(id);
             if (existingOrder == null)
             {
                 return NotFound(new { Message = "Sipariş bulunamadı." });
             }
 
-            if (userRole != "Admin" && existingOrder.CustomerId != userId)
+            if (!IsUserAuthorizedToAccessOrder(existingOrder.CustomerId))
             {
                 return BadRequest(new { Message = "Bu siparişi güncelleme yetkiniz yok." });
             }

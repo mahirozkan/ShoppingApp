@@ -51,10 +51,23 @@ namespace ShoppingApp.WebApi.Controllers
             return Created("", new { Message = result.Message });
         }
 
-        [Authorize]
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<IActionResult> GetUserById(int id)
         {
+            var userIdClaim = User.FindFirst("id")?.Value;
+            if (userIdClaim == null)
+            {
+                return Unauthorized(new { Message = "Geçersiz token." });
+            }
+
+            var userId = int.Parse(userIdClaim);
+
+            if (!User.IsInRole("Admin") && userId != id)
+            {
+                return Unauthorized(new { Message = "Sadece kendi bilgilerinize erişebilirsiniz." });
+            }
+
             var user = await _userService.GetUserByIdAsync(id);
             if (user == null)
             {
@@ -73,6 +86,7 @@ namespace ShoppingApp.WebApi.Controllers
 
             return Ok(userDto);
         }
+
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateUser(int id, [FromBody] UserUpdateDto userDto)
