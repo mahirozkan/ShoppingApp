@@ -44,7 +44,7 @@ namespace ShoppingApp.WebApi.Controllers
             var result = await _productService.CreateProductAsync(productDto);
 
             if (!result.IsSucceed)
-                return BadRequest(new { Message = result.Message });
+                return BadRequest(new { Message = "Aynı isimli ürün mevcut." });
 
             return Created("", new { Message = result.Message });
         }
