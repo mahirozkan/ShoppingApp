@@ -68,6 +68,10 @@ namespace ShoppingApp.Data.Context
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Product>()
+                .HasIndex(p => p.ProductName)
+                .IsUnique();
+
+            modelBuilder.Entity<Product>()
                 .Property(p => p.Price)
                 .HasColumnType("decimal(18,2)");
 
