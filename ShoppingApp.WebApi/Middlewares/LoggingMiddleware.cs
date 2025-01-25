@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 public class LoggingMiddleware
@@ -16,16 +17,28 @@ public class LoggingMiddleware
 
     public async Task InvokeAsync(HttpContext httpContext)
     {
-        var request = httpContext.Request;
-        var userId = httpContext.User.Identity.Name;  // Kullanıcı bilgisi
+        var stopwatch = Stopwatch.StartNew();
 
-        // Log kaydını başlatıyoruz
-        _logger.LogInformation($"User: {userId} | Request Path: {request.Path} | Method: {request.Method}");
+        try
+        {
+            var request = httpContext.Request;
+            var userId = httpContext.User.Identity?.IsAuthenticated == true
+                ? httpContext.User.Identity.Name
+                : "Anonim";
 
-        // Middleware zincirinde sonraki adımı çağırıyoruz
-        await _next(httpContext);
+            _logger.LogInformation($"User: {userId} | Request Path: {request.Path} | Method: {request.Method}");
 
-        // İsteğin sonucunu loglayabiliriz
-        _logger.LogInformation($"User: {userId} | Response Status: {httpContext.Response.StatusCode}");
+            await _next(httpContext);
+
+            stopwatch.Stop();
+
+            _logger.LogInformation($"User: {userId} | Response Status: {httpContext.Response.StatusCode} | Duration: {stopwatch.ElapsedMilliseconds} ms");
+        }
+        catch (Exception ex)
+        {
+            stopwatch.Stop();
+            _logger.LogError($"User: {httpContext.User.Identity?.Name ?? "Anonim"} | Path: {httpContext.Request.Path} | Error: {ex.Message} | Duration: {stopwatch.ElapsedMilliseconds} ms");
+            throw;
+        }
     }
 }
