@@ -2,13 +2,15 @@
 using Microsoft.AspNetCore.Mvc;
 using ShoppingApp.Business.Dtos;
 using ShoppingApp.Business.Interfaces;
+using ShoppingApp.WebApi.Jwt;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace ShoppingApp.WebApi.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
     public class OrderController : ControllerBase
     {
         private readonly IOrderService _orderService;
@@ -19,6 +21,7 @@ namespace ShoppingApp.WebApi.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAllOrders()
         {
             var orders = await _orderService.GetAllOrdersAsync();
@@ -32,6 +35,14 @@ namespace ShoppingApp.WebApi.Controllers
 
             if (order == null)
                 return NotFound(new { Message = "Sipariş bulunamadı." });
+
+            var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+            var userId = int.Parse(User.FindFirst(JwtClaimNames.Id)?.Value);
+
+            if (userRole == "Customer" && order.CustomerId != userId)
+            {
+                return Forbid();
+            }
 
             return Ok(order);
         }
@@ -59,14 +70,28 @@ namespace ShoppingApp.WebApi.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(new { Message = "Geçersiz model verisi.", Errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage) });
+            }
+
+            var userId = int.Parse(User.FindFirst(JwtClaimNames.Id)?.Value);
+            var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+
+            var existingOrder = await _orderService.GetOrderByIdAsync(id);
+            if (existingOrder == null)
+            {
+                return NotFound(new { Message = "Sipariş bulunamadı." });
+            }
+
+            if (userRole != "Admin" && existingOrder.CustomerId != userId)
+            {
+                return BadRequest(new { Message = "Bu siparişi güncelleme yetkiniz yok." });
             }
 
             var result = await _orderService.UpdateOrderAsync(id, orderDto);
 
             if (!result.IsSucceed)
             {
-                return NotFound(new { Message = result.Message });
+                return BadRequest(new { Message = "Sipariş güncellenirken bir hata oluştu.", Detail = result.Message });
             }
 
             return Ok(new { Message = result.Message });

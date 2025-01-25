@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using ShoppingApp.Business.Dtos;
 using ShoppingApp.Business.Interfaces;
 using System.Threading.Tasks;
@@ -17,6 +18,7 @@ namespace ShoppingApp.WebApi.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> GetAllProducts()
         {
             var products = await _productService.GetAllProductsAsync();
@@ -24,6 +26,7 @@ namespace ShoppingApp.WebApi.Controllers
         }
 
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetProductById(int id)
         {
             var product = await _productService.GetProductByIdAsync(id);
@@ -35,6 +38,7 @@ namespace ShoppingApp.WebApi.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateProduct([FromBody] ProductCreateModelDto productDto)
         {
             var result = await _productService.CreateProductAsync(productDto);
@@ -46,6 +50,7 @@ namespace ShoppingApp.WebApi.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateProduct(int id, [FromBody] ProductUpdateModelDto productDto)
         {
             var result = await _productService.UpdateProductAsync(id, productDto);
@@ -57,6 +62,7 @@ namespace ShoppingApp.WebApi.Controllers
         }
 
         [HttpPatch("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> PatchProduct(int id, [FromBody] ProductPatchModelDto productDto)
         {
             var result = await _productService.PatchProductAsync(id, productDto);
@@ -69,6 +75,7 @@ namespace ShoppingApp.WebApi.Controllers
 
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteProduct(int id)
         {
             var result = await _productService.DeleteProductAsync(id);
