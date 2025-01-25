@@ -6,9 +6,10 @@ using System.Threading.Tasks;
 
 namespace ShoppingApp.Data.Entities
 {
+    // Kullanıcı rollerini temsil eden enum
     public enum Role
     {
-        Customer = 0,
-        Admin = 1
+        Customer = 0, // Standart müşteri rolü
+        Admin = 1 // Yönetici rolü
     }
 }

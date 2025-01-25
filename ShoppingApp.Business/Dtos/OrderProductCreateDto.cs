@@ -7,11 +7,13 @@ using System.Threading.Tasks;
 
 namespace ShoppingApp.Business.Dtos
 {
+    // Siparişe yeni bir ürün eklemek için kullanılan DTO (Data Transfer Object)
     public class OrderProductCreateDto
     {
-        [Required]
-        public int ProductId { get; set; }
-        [Required]
-        public int Quantity { get; set; }
+        [Required] // Bu alanın doldurulması zorunludur.
+        public int ProductId { get; set; } // Eklenecek ürünün kimlik numarası.
+
+        [Required] // Bu alanın doldurulması zorunludur.
+        public int Quantity { get; set; } // Siparişe eklenen ürünün miktarı.
     }
 }

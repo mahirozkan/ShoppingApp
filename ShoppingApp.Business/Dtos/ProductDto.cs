@@ -6,11 +6,15 @@ using System.Threading.Tasks;
 
 namespace ShoppingApp.Business.Dtos
 {
+    // Ürün bilgilerini temsil eden DTO (Data Transfer Object)
     public class ProductDto
     {
-        public int Id { get; set; }
-        public string ProductName { get; set; }
-        public decimal Price { get; set; }
-        public int StockQuantity { get; set; }
+        public int Id { get; set; } // Ürünün benzersiz kimlik numarası.
+
+        public string ProductName { get; set; } // Ürünün adı.
+
+        public decimal Price { get; set; } // Ürünün fiyatı.
+
+        public int StockQuantity { get; set; } // Ürünün mevcut stok miktarı.
     }
 }
