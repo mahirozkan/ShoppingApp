@@ -106,5 +106,13 @@ namespace ShoppingApp.WebApi.Controllers
 
             return Ok(new { Message = result.Message }); // Başarı durumunda mesaj döner
         }
+
+        [HttpGet("paged")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetPagedProducts([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        {
+            var pagedResult = await _productService.GetPagedProductsAsync(page, pageSize);
+            return Ok(pagedResult);
+        }
     }
 }

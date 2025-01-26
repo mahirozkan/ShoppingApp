@@ -73,6 +73,7 @@ builder.Services.AddScoped<IOrderService, OrderService>(); // Sipariþ servisi
 builder.Services.AddScoped<IUserService, UserService>(); // Kullanýcý servisi
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>(); // Þifreleme servisi
 builder.Services.AddScoped<IProductService, ProductService>(); // Ürün servisi
+builder.Services.AddMemoryCache();
 
 // Controller desteði ekler
 builder.Services.AddControllers();

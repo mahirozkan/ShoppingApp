@@ -1,4 +1,5 @@
-﻿using ShoppingApp.Business.Dtos;
+﻿using Microsoft.EntityFrameworkCore;
+using ShoppingApp.Business.Dtos;
 using ShoppingApp.Business.Interfaces;
 using ShoppingApp.Business.Types;
 using ShoppingApp.Data.Context;
@@ -159,5 +160,31 @@ namespace ShoppingApp.Business.Services
                 Message = "Ürün başarıyla silindi."
             };
         }
+
+        public async Task<PagedResult<ProductDto>> GetPagedProductsAsync(int page, int pageSize)
+        {
+            var query = _context.Products.AsQueryable();
+            var totalCount = await query.CountAsync();
+
+            var items = await query.Skip((page - 1) * pageSize).Take(pageSize)
+                .Select(p => new ProductDto
+                {
+                    Id = p.Id,
+                    ProductName = p.ProductName,
+                    Price = p.Price,
+                    StockQuantity = p.StockQuantity
+                })
+                .ToListAsync();
+
+            return new PagedResult<ProductDto>
+            {
+                CurrentPage = page,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+                Items = items
+            };
+        }
+
+
     }
 }

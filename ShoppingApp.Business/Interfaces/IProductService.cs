@@ -1,5 +1,6 @@
 ﻿using ShoppingApp.Business.Dtos; // DTO'ları içeren namespace
 using ShoppingApp.Business.Types; // Hizmet mesajı tanımlarını içeren namespace
+using ShoppingApp.Data.Entities;
 using System.Collections.Generic; // List koleksiyonunu kullanabilmek için gerekli namespace
 using System.Threading.Tasks; // Asenkron operasyonlar için gerekli namespace
 
@@ -19,5 +20,7 @@ namespace ShoppingApp.Business.Interfaces
         Task<ServiceMessage> PatchProductAsync(int id, ProductPatchModelDto model); // Belirtilen ID'ye sahip ürünün kısmi detaylarını günceller.
 
         Task<ServiceMessage> DeleteProductAsync(int id); // Belirtilen ID'ye sahip ürünün silinmesini sağlar.
+
+        Task<PagedResult<ProductDto>> GetPagedProductsAsync(int page, int pageSize);
     }
 }
