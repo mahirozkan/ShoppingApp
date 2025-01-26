@@ -111,8 +111,13 @@ namespace ShoppingApp.WebApi.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> GetPagedProducts([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
+            // Varsayılan olarak sayfa 1 ve sayfa büyüklüğü 10 kullanılır.
+            // page: İstenen sayfa numarası
+            // pageSize: Bir sayfada kaç öğe olduğu
+
+            // Servisten sayfalama sonuçlarını alıyoruz
             var pagedResult = await _productService.GetPagedProductsAsync(page, pageSize);
-            return Ok(pagedResult);
+            return Ok(pagedResult); // Sayfalama sonuçlarını API tüketicisine döndürüyoruz
         }
     }
 }

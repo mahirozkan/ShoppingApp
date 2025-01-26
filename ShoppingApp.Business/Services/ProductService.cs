@@ -163,11 +163,13 @@ namespace ShoppingApp.Business.Services
 
         public async Task<PagedResult<ProductDto>> GetPagedProductsAsync(int page, int pageSize)
         {
-            var query = _context.Products.AsQueryable();
-            var totalCount = await query.CountAsync();
+            var query = _context.Products.AsQueryable(); // Veritabanındaki tüm ürünlere bir sorgu başlatıyoruz.
+            var totalCount = await query.CountAsync(); // Toplam ürün sayısını alıyoruz.
 
-            var items = await query.Skip((page - 1) * pageSize).Take(pageSize)
-                .Select(p => new ProductDto
+            // Belirtilen sayfa numarasına göre ürünleri atlayıp (Skip) yalnızca istenen sayıda (Take) ürün alıyoruz.
+            var items = await query.Skip((page - 1) * pageSize) // Örneğin, sayfa 2 ve sayfa büyüklüğü 10 ise ilk 10 öğeyi atlar.
+                .Take(pageSize) // Sayfa büyüklüğüne göre yalnızca belirli sayıda öğe alır.
+                .Select(p => new ProductDto 
                 {
                     Id = p.Id,
                     ProductName = p.ProductName,
@@ -176,15 +178,14 @@ namespace ShoppingApp.Business.Services
                 })
                 .ToListAsync();
 
+            // Sonuçları PagedResult sınıfı ile döndürüyoruz.
             return new PagedResult<ProductDto>
             {
-                CurrentPage = page,
-                PageSize = pageSize,
-                TotalCount = totalCount,
-                Items = items
+                CurrentPage = page, // Şu anki sayfa
+                PageSize = pageSize, // Her sayfadaki öğe sayısı
+                TotalCount = totalCount, // Toplam ürün sayısı
+                Items = items // Sayfaya ait ürünler
             };
         }
-
-
     }
 }

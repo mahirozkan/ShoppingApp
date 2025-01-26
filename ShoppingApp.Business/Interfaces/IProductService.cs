@@ -21,6 +21,6 @@ namespace ShoppingApp.Business.Interfaces
 
         Task<ServiceMessage> DeleteProductAsync(int id); // Belirtilen ID'ye sahip ürünün silinmesini sağlar.
 
-        Task<PagedResult<ProductDto>> GetPagedProductsAsync(int page, int pageSize);
+        Task<PagedResult<ProductDto>> GetPagedProductsAsync(int page, int pageSize); // Belirli bir sayfa ve sayfa büyüklüğüne göre ürünleri döndüren metot
     }
 }
