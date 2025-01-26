@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using ShoppingApp.Business.Dtos;
 using ShoppingApp.Business.Interfaces;
 using ShoppingApp.Business.Types;
@@ -14,25 +15,46 @@ namespace ShoppingApp.Business.Services
     public class ProductService : IProductService
     {
         private readonly ShoppingAppDbContext _context; // Veri tabanı bağlamı
+        private readonly IMemoryCache _cache; // MemoryCache ile caching yapıyoruz.
+        private const string ProductsCacheKey = "ProductsCache"; // Cache anahtarı
 
-        public ProductService(ShoppingAppDbContext context)
+        public ProductService(ShoppingAppDbContext context, IMemoryCache cache)
         {
-            // Veri tabanı bağlamını başlatır.
-            _context = context;
+            _context = context; // Veri tabanı bağlamını başlatır.
+            _cache = cache; // Dependency Injection ile MemoryCache örneği alınıyor.
+        }
+
+        // Cache temizleme işlemi
+        private void ClearProductsCache()
+        {
+            _cache.Remove(ProductsCacheKey);
         }
 
         // Tüm ürünleri getirir.
         public async Task<List<ProductDto>> GetAllProductsAsync()
         {
-            return _context.Products
-                .Select(p => new ProductDto
-                {
-                    Id = p.Id, // Ürün ID'si
-                    ProductName = p.ProductName, // Ürün adı
-                    Price = p.Price, // Ürün fiyatı
-                    StockQuantity = p.StockQuantity // Stok miktarı
-                })
-                .ToList();
+            // Cache'den veri kontrolü yapıyoruz
+            if (!_cache.TryGetValue(ProductsCacheKey, out List<ProductDto> cachedProducts))
+            {
+                // Eğer cache'de veri yoksa veritabanına gidiyoruz
+                var products = await _context.Products
+                    .Select(p => new ProductDto
+                    {
+                        Id = p.Id,
+                        ProductName = p.ProductName,
+                        Price = p.Price,
+                        StockQuantity = p.StockQuantity
+                    })
+                    .ToListAsync();
+
+                // Cache'e ekliyoruz ve süresini belirliyoruz (10 dakika)
+                _cache.Set(ProductsCacheKey, products, TimeSpan.FromMinutes(10));
+
+                return products;
+            }
+
+            // Cache'de veri varsa doğrudan döndürüyoruz.
+            return cachedProducts;
         }
 
         // Belirtilen ID'ye göre bir ürünü getirir.
@@ -64,6 +86,9 @@ namespace ShoppingApp.Business.Services
             await _context.Products.AddAsync(product);
             await _context.SaveChangesAsync();
 
+            // Yeni ürün eklendiği için cache'i temizliyoruz.
+            ClearProductsCache();
+
             return new ServiceMessage
             {
                 IsSucceed = true,
@@ -91,6 +116,9 @@ namespace ShoppingApp.Business.Services
 
             _context.Products.Update(product);
             await _context.SaveChangesAsync();
+
+            // Ürün güncellendiği için cache'i temizliyoruz.
+            ClearProductsCache();
 
             return new ServiceMessage
             {
@@ -131,6 +159,9 @@ namespace ShoppingApp.Business.Services
             // Veritabanına kaydet
             await _context.SaveChangesAsync();
 
+            // Ürün güncellendiği için cache'i temizliyoruz.
+            ClearProductsCache();
+
             return new ServiceMessage
             {
                 IsSucceed = true,
@@ -153,6 +184,9 @@ namespace ShoppingApp.Business.Services
 
             _context.Products.Remove(product);
             await _context.SaveChangesAsync();
+
+            // Ürün güncellendiği için cache'i temizliyoruz.
+            ClearProductsCache();
 
             return new ServiceMessage
             {
